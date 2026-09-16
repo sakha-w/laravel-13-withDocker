@@ -307,6 +307,132 @@ Recommended clients:
 psql -h localhost -p 5432 -U laravel -d laravel
 ```
 
+## Database Management
+
+### Migrations
+
+The project uses Laravel migrations for database schema management. All migrations are located in `database/migrations/`:
+
+| Migration | Description |
+| --------- | ----------- |
+| `0001_01_01_000000_create_users_table.php` | Users table (id, name, email, email_verified_at, password, remember_token, two_factor_secret, two_factor_recovery_codes, current_team_id, profile_photo_path, created_at, updated_at) |
+| `0001_01_01_000001_create_cache_table.php` | Cache table (key, value, expiry) |
+| `0001_01_01_000002_create_jobs_table.php` | Jobs table for queue processing |
+
+**Running migrations:**
+
+```bash
+# Run all pending migrations
+docker compose exec app php artisan migrate
+
+# Reset and re-run with fresh data
+docker compose exec app php artisan migrate:fresh --seed
+
+# Force reset all tables and re-migrate
+docker compose exec app php artisan migrate:reset
+```
+
+### Seeders
+
+Database seeders populate initial data. The main seeder is `DatabaseSeeder.php`:
+
+```bash
+# Run the database seeder
+docker compose exec app php artisan db:seed
+
+# Run with fresh migration
+docker compose exec app php artisan migrate:fresh --seed
+```
+
+**Table seeders available:**
+- `UsersTableSeeder` - Creates a test user (`test@example.com`)
+
+### Database Structure Overview
+
+The PostgreSQL database contains the following tables:
+
+| Table | Primary Key | Key Columns | Description |
+| ----- | ----------- | ----------- | ----------- |
+| `users` | `id` (bigint) | `email`, `name`, `created_at` | Application users, authentication |
+| `cache` | composite | `key`, `value` | Cache storage (default: database driver) |
+| `jobs` | bigint | `queue`, `payload`, `attempts` | Queued jobs for background processing |
+
+**Entity Relationship:**
+- `users` - One-to-many relationship with potential models/responses
+- `cache` - Key-value pairs for session/cache storage
+- `jobs` - Job queue for Laravel's queue system
+
+### Connection Details
+
+**From Host Machine:**
+
+```bash
+# Using psql CLI
+psql -h localhost -p 5432 -U laravel -d laravel
+
+# Using DBeaver/TablePlus/pgAdmin:
+# Host: localhost
+# Port: 5432
+# Database: laravel
+# Username: laravel
+# Password: secret
+```
+
+**From Inside Docker Containers:**
+
+```bash
+# Access via Docker network
+docker compose exec app psql -h postgres -U laravel -d laravel
+
+# Or via the app container's internal DB config
+# DB_HOST=postgres
+# DB_PORT=5432
+# DB_DATABASE=laravel
+```
+
+### Common Database Operations
+
+```bash
+# List all tables
+docker compose exec app psql -U laravel -d laravel -c "\dt"
+
+# Describe table structure
+docker compose exec app psql -U laravel -d laravel -c "\d users"
+
+# Count rows in users table
+docker compose exec app psql -U laravel -d laravel -c "SELECT COUNT(*) FROM users;"
+
+# View all users
+docker compose exec app psql -U laravel -d laravel -c "SELECT * FROM users;"
+
+# Create new database (if needed)
+docker compose exec app psql -U postgres -c "CREATE DATABASE new_db_name;"
+
+# Drop database
+docker compose exec app psql -U postgres -c "DROP DATABASE db_name;"
+```
+
+### GUI Clients Recommendation
+
+For visual database management, these clients work well with the project's PostgreSQL setup:
+
+| Client | URL | Notes |
+| ------ | -------- | -------- |
+| **DBeaver** | <https://dbeaver.io> | Free, universal, supports PostgreSQL |
+| **TablePlus** | <https://tableplus.com> | Modern GUI, native performance |
+| **pgAdmin** | <https://www.pgadmin.org> | Official PostgreSQL management tool |
+| **DataGrip** | <https://www.jetbrains.com/datagrip/> | Professional IDE with DB tools |
+
+### Backup & Restore
+
+```bash
+# Backup database
+docker compose exec postgres pg_dump -U laravel -d laravel > backup.sql
+
+# Restore database
+docker compose exec -i postgres psql -U laravel -d laravel < backup.sql
+```
+
 ## Frontend Development
 
 The frontend uses **Vite** with **Tailwind CSS v4** for fast development:
