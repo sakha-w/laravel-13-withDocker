@@ -8,7 +8,9 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     && docker-php-ext-install \
         pdo_pgsql \
-        zip
+        zip \
+    && rm -rf /var/lib/apt/lists/*
+    
 
 WORKDIR /var/www
 
